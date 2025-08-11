@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const testDataController = require('../controllers/test.controller');
+const { protect } = require('../middlewares/auth.middleware');
 
 router.route('/projects/:projectId/test-data')
-  .post(testDataController.createTestData)
-  .get(testDataController.getTestDataForProject);
+  .post(protect, testDataController.createTestData)
+  .get(protect, testDataController.getTestDataForProject);
 
 router.route('/test-data/:id')
-  .get(testDataController.getTestData)
-  .put(testDataController.updateTestData)
-  .delete(testDataController.deleteTestData);
+  .get(protect, testDataController.getTestData)
+  .put(protect, testDataController.updateTestData)
+  .delete(protect, testDataController.deleteTestData);
 
 module.exports = router;

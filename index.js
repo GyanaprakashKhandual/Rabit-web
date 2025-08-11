@@ -14,8 +14,8 @@ const app = express();
 app.use(express.json());
 
 app.use('/v1/auth', authRoutes);
-app.use('/v1/data', testRoutes);
-app.use('/v1/work', projectRoutes);
+app.use('/v1', testRoutes);
+app.use('/v1', projectRoutes);
 
 const PORT = process.env.PORT || 5000;
 
