@@ -1,115 +1,109 @@
-// controllers/project.controller.js
-const Project = require('../models/project.model'); // adjust path if needed
+const Project = require('../models/project.model');
+const TestData = require('../models/test.model');
+const asyncHandler = require('express-async-handler');
 
-/**
- * @desc    Create a new project
- * @route   POST /api/projects
- * @access  Private
- */
-exports.createProject = async (req, res) => {
-    try {
-        const { projectName, projectDesc } = req.body;
+// @desc    Create a new project
+// @route   POST /api/projects
+// @access  Private
+const createProject = asyncHandler(async (req, res) => {
+  const { projectName, projectDesc } = req.body;
 
-        if (!projectName || !projectDesc) {
-            return res.status(400).json({ message: "Project name and description are required" });
-        }
+  if (!projectName || !projectDesc) {
+    res.status(400);
+    throw new Error('Please provide all fields');
+  }
 
-        const project = await Project.create({
-            user: req.user._id, // assuming user is attached to req by middleware
-            projectName,
-            projectDesc
-        });
+  const project = await Project.create({
+    user: req.user._id,
+    projectName,
+    projectDesc
+  });
 
-        res.status(201).json({
-            success: true,
-            message: "Project created successfully",
-            data: project
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Server Error", error: error.message });
-    }
-};
+  res.status(201).json(project);
+});
 
-/**
- * @desc    Get all projects for a user
- * @route   GET /api/projects
- * @access  Private
- */
-exports.getProjects = async (req, res) => {
-    try {
-        const projects = await Project.find({ user: req.user._id }).sort({ createdAt: -1 });
-        res.status(200).json({ success: true, data: projects });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Server Error", error: error.message });
-    }
-};
+// @desc    Get all projects for a user
+// @route   GET /api/projects
+// @access  Private
+const getProjects = asyncHandler(async (req, res) => {
+  const projects = await Project.find({ user: req.user._id });
+  res.status(200).json(projects);
+});
 
-/**
- * @desc    Get a single project by ID
- * @route   GET /api/projects/:id
- * @access  Private
- */
-exports.getProjectById = async (req, res) => {
-    try {
-        const project = await Project.findOne({ _id: req.params.id, user: req.user._id });
+// @desc    Get a single project with its test data
+// @route   GET /api/projects/:id
+// @access  Private
+const getProject = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({
+    _id: req.params.id,
+    user: req.user._id
+  });
 
-        if (!project) {
-            return res.status(404).json({ success: false, message: "Project not found" });
-        }
+  if (!project) {
+    res.status(404);
+    throw new Error('Project not found');
+  }
 
-        res.status(200).json({ success: true, data: project });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Server Error", error: error.message });
-    }
-};
+  const testData = await TestData.find({
+    project: req.params.id,
+    user: req.user._id
+  });
 
-/**
- * @desc    Update a project
- * @route   PUT /api/projects/:id
- * @access  Private
- */
-exports.updateProject = async (req, res) => {
-    try {
-        const { projectName, projectDesc } = req.body;
+  res.status(200).json({
+    project,
+    testData
+  });
+});
 
-        const project = await Project.findOneAndUpdate(
-            { _id: req.params.id, user: req.user._id },
-            { projectName, projectDesc },
-            { new: true, runValidators: true }
-        );
+// @desc    Update a project
+// @route   PUT /api/projects/:id
+// @access  Private
+const updateProject = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({
+    _id: req.params.id,
+    user: req.user._id
+  });
 
-        if (!project) {
-            return res.status(404).json({ success: false, message: "Project not found" });
-        }
+  if (!project) {
+    res.status(404);
+    throw new Error('Project not found');
+  }
 
-        res.status(200).json({
-            success: true,
-            message: "Project updated successfully",
-            data: project
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Server Error", error: error.message });
-    }
-};
+  project.projectName = req.body.projectName || project.projectName;
+  project.projectDesc = req.body.projectDesc || project.projectDesc;
 
-/**
- * @desc    Delete a project
- * @route   DELETE /api/projects/:id
- * @access  Private
- */
-exports.deleteProject = async (req, res) => {
-    try {
-        const project = await Project.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+  const updatedProject = await project.save();
+  res.status(200).json(updatedProject);
+});
 
-        if (!project) {
-            return res.status(404).json({ success: false, message: "Project not found" });
-        }
+// @desc    Delete a project and its test data
+// @route   DELETE /api/projects/:id
+// @access  Private
+const deleteProject = asyncHandler(async (req, res) => {
+  const project = await Project.findOne({
+    _id: req.params.id,
+    user: req.user._id
+  });
 
-        res.status(200).json({
-            success: true,
-            message: "Project deleted successfully"
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Server Error", error: error.message });
-    }
+  if (!project) {
+    res.status(404);
+    throw new Error('Project not found');
+  }
+
+  // Delete all test data associated with the project
+  await TestData.deleteMany({
+    project: req.params.id,
+    user: req.user._id
+  });
+
+  await project.remove();
+  res.status(200).json({ message: 'Project and associated test data removed' });
+});
+
+module.exports = {
+  createProject,
+  getProjects,
+  getProject,
+  updateProject,
+  deleteProject
 };

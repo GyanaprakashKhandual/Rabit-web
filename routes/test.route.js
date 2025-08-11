@@ -1,11 +1,14 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const testDataController = require("../controllers/test.controller");
+const testDataController = require('../controllers/test.controller');
 
-// Routes
-router.post("/", testDataController.createTestData);
-router.get("/", testDataController.getAllTestData);
-router.get("/:id", testDataController.getTestDataById);
-router.delete("/:id", testDataController.deleteTestData);
+router.route('/projects/:projectId/test-data')
+  .post(testDataController.createTestData)
+  .get(testDataController.getTestDataForProject);
+
+router.route('/test-data/:id')
+  .get(testDataController.getTestData)
+  .put(testDataController.updateTestData)
+  .delete(testDataController.deleteTestData);
 
 module.exports = router;

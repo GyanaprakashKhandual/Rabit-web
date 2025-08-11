@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// Helper function to avoid repeating metric schema
 function metricTemplate() {
   return {
     avg: { type: Number, required: true },
@@ -12,11 +11,15 @@ function metricTemplate() {
   };
 }
 
-// Single schema for TestData (includes K6 result data)
 const testDataSchema = new mongoose.Schema({
   user: {
-    type: mongoose.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: true
+  },
+  project: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
     required: true
   },
   apiName: {
@@ -35,8 +38,6 @@ const testDataSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-
-  // Embedded K6 result data
   k6Result: {
     summary: {
       checks: {
@@ -46,12 +47,12 @@ const testDataSchema = new mongoose.Schema({
       },
       data: {
         received: {
-          total: { type: Number, required: true }, // bytes
-          rate: { type: Number, required: true }   // bytes/sec
+          total: { type: Number, required: true },
+          rate: { type: Number, required: true }
         },
         sent: {
-          total: { type: Number, required: true }, // bytes
-          rate: { type: Number, required: true }   // bytes/sec
+          total: { type: Number, required: true },
+          rate: { type: Number, required: true }
         }
       },
       http_requests: {
@@ -65,7 +66,6 @@ const testDataSchema = new mongoose.Schema({
         rate: { type: Number, required: true }
       }
     },
-
     metrics: {
       http_req_blocked: metricTemplate(),
       http_req_connecting: metricTemplate(),
@@ -76,13 +76,11 @@ const testDataSchema = new mongoose.Schema({
       http_req_waiting: metricTemplate(),
       iteration_duration: metricTemplate()
     },
-
     vus: {
       min: { type: Number, required: true },
       max: { type: Number, required: true },
       max_total: { type: Number, required: true }
     },
-
     timestamp: { type: Date, required: true }
   }
 }, { timestamps: true });
