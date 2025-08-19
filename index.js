@@ -29,9 +29,9 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.use('/v1/auth', authRoutes);
-app.use('/v1', testRoutes);
-app.use('/v1', projectRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1', testRoutes);
+app.use('/api/v1', projectRoutes);
 
 const PORT = process.env.PORT || 5000;
 
